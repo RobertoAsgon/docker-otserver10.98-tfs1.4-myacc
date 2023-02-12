@@ -1,0 +1,52 @@
+version: "3.3"
+
+services:
+  ubuntu:
+    build:
+      context: ./backend
+    container_name: 1-Ubuntu
+    stdin_open: true
+    tty: true
+    ports:
+      - "7171:7171"
+      - "7172:7172"
+    volumes:
+      - ./backend/datapack:/srv
+    depends_on:
+      - db
+
+  web:
+    build:
+      context: ./frontend
+    container_name: 2-Site
+    volumes:
+      - ./backend/datapack:/srv
+      - ./frontend/html:/var/www/html
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+      - ubuntu
+
+  db:
+    image: mysql:5.7
+    container_name: 3-BancoDeDados
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: otserv
+      MYSQL_PASSWORD: 1234
+    volumes:
+      - ./backend/schema:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+
+  dbAdminPainel:
+    image: phpmyadmin/phpmyadmin:5.1.1
+    container_name: 3-AdminBancoDeDados
+    restart: always
+    ports:
+      - 1010:80
+    links:
+      - db
+    environment:
+      PMA_ARBITRARY: 1
