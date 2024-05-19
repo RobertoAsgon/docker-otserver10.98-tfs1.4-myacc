@@ -62,13 +62,13 @@ MiniWindow
     AmmoSlot
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
-      margin-top: 235
+      margin-top: 238
       margin-right: 65
 
     HeadSlot
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
-      margin-top: 20
+      margin-top: 22
       margin-left: 70
 
     BodySlot
@@ -81,13 +81,13 @@ MiniWindow
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
       margin-right: 65  
-      margin-top: 180 
+      margin-top: 183 
 
     FeetSlot
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
       margin-left: 70 
-      margin-top: 240 
+      margin-top: 245 
       
     RightSlot
       anchors.top: parent.top
@@ -99,22 +99,22 @@ MiniWindow
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
       margin-right: 65
-      margin-top: 129 
+      margin-top: 132 
 
     BackSlot
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
       margin-left: 70
-      margin-top: 185
+      margin-top: 188
               
     NeckSlot
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
       margin-right: 50
-      margin-top: 20
+      margin-top: 22
       
     FingerSlot
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
       margin-right: 67  
-      margin-top: 77
+      margin-top: 81
