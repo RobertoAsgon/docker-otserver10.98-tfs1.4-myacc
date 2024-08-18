@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_ENUMS_H_003445999FEE4A67BCECBE918B0124CE
 #define FS_ENUMS_H_003445999FEE4A67BCECBE918B0124CE
@@ -83,18 +99,12 @@ enum itemAttrTypes : uint32_t {
 
 enum VipStatus_t : uint8_t {
 	VIPSTATUS_OFFLINE = 0,
-	VIPSTATUS_ONLINE = 1,
-	VIPSTATUS_PENDING = 2
+	VIPSTATUS_ONLINE = 1
 };
 
 enum MarketAction_t {
 	MARKETACTION_BUY = 0,
 	MARKETACTION_SELL = 1,
-};
-
-enum MarketRequest_t {
-	MARKETREQUEST_OWN_OFFERS = 0xFFFE,
-	MARKETREQUEST_OWN_HISTORY = 0xFFFF,
 };
 
 enum MarketOfferState_t {
@@ -342,9 +352,7 @@ enum ConditionType_t {
 	CONDITION_CURSED = 1 << 22,
 	CONDITION_EXHAUST_COMBAT = 1 << 23, // unused
 	CONDITION_EXHAUST_HEAL = 1 << 24, // unused
-	CONDITION_PACIFIED = 1 << 25,
-	CONDITION_SPELLCOOLDOWN = 1 << 26,
-	CONDITION_SPELLGROUPCOOLDOWN = 1 << 27,
+	CONDITION_PACIFIED = 1 << 25
 };
 
 enum ConditionId_t : int8_t {
@@ -446,18 +454,8 @@ enum ReturnValue {
 	RETURNVALUE_TRADEPLAYERHIGHESTBIDDER,
 	RETURNVALUE_YOUCANNOTTRADETHISHOUSE,
 	RETURNVALUE_YOUDONTHAVEREQUIREDPROFESSION,
-	RETURNVALUE_CANNOTMOVEITEMISNOTSTOREITEM,
 	RETURNVALUE_ITEMCANNOTBEMOVEDTHERE,
 	RETURNVALUE_YOUCANNOTUSETHISBED,
-};
-
-enum SpeechBubble_t
-{
-	SPEECHBUBBLE_NONE = 0,
-	SPEECHBUBBLE_NORMAL = 1,
-	SPEECHBUBBLE_TRADE = 2,
-	SPEECHBUBBLE_QUEST = 3,
-	SPEECHBUBBLE_QUESTTRADER = 4,
 };
 
 enum MapMark_t
@@ -487,7 +485,6 @@ enum MapMark_t
 struct Outfit_t {
 	uint16_t lookType = 0;
 	uint16_t lookTypeEx = 0;
-	uint16_t lookMount = 0;
 	uint8_t lookHead = 0;
 	uint8_t lookBody = 0;
 	uint8_t lookLegs = 0;
@@ -541,6 +538,7 @@ struct MarketOfferEx {
 	std::string playerName;
 };
 
+
 struct HistoryMarketOffer {
 	uint32_t timestamp;
 	uint32_t price;
@@ -574,6 +572,7 @@ enum CombatOrigin
 	ORIGIN_SPELL,
 	ORIGIN_MELEE,
 	ORIGIN_RANGED,
+	ORIGIN_WAND,
 };
 
 struct CombatDamage
@@ -589,8 +588,6 @@ struct CombatDamage
 	bool leeched = false;
 };
 
-using MarketOfferList = std::list<MarketOffer>;
-using HistoryMarketOfferList = std::list<HistoryMarketOffer>;
 using ShopInfoList = std::list<ShopInfo>;
 
 enum MonstersEvent_t : uint8_t {

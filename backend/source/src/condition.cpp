@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -196,12 +212,6 @@ Condition* Condition::createCondition(ConditionId_t id, ConditionType_t type, in
 
 		case CONDITION_ATTRIBUTES:
 			return new ConditionAttributes(id, type, ticks, buff, subId, aggressive);
-
-		case CONDITION_SPELLCOOLDOWN:
-			return new ConditionSpellCooldown(id, type, ticks, buff, subId, aggressive);
-
-		case CONDITION_SPELLGROUPCOOLDOWN:
-			return new ConditionSpellGroupCooldown(id, type, ticks, buff, subId, aggressive);
 
 		case CONDITION_DRUNK:
 			return new ConditionDrunk(id, type, ticks, buff, subId, param, aggressive);
@@ -484,6 +494,7 @@ void ConditionAttributes::updateStats(Player* player)
 
 	if (needUpdateStats) {
 		player->sendStats();
+		player->sendSkills();
 	}
 }
 
@@ -562,6 +573,7 @@ void ConditionAttributes::endCondition(Creature* creature)
 
 		if (needUpdateStats) {
 			player->sendStats();
+			player->sendSkills();
 		}
 	}
 
@@ -659,6 +671,36 @@ bool ConditionAttributes::setParam(ConditionParam_t param, int32_t value)
 			return true;
 		}
 
+		case CONDITION_PARAM_SPECIALSKILL_CRITICALHITCHANCE: {
+			specialSkills[SPECIALSKILL_CRITICALHITCHANCE] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SPECIALSKILL_CRITICALHITAMOUNT: {
+			specialSkills[SPECIALSKILL_CRITICALHITAMOUNT] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SPECIALSKILL_LIFELEECHCHANCE: {
+			specialSkills[SPECIALSKILL_LIFELEECHCHANCE] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SPECIALSKILL_LIFELEECHAMOUNT: {
+			specialSkills[SPECIALSKILL_LIFELEECHAMOUNT] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SPECIALSKILL_MANALEECHCHANCE: {
+			specialSkills[SPECIALSKILL_MANALEECHCHANCE] = value;
+			return true;
+		}
+
+		case CONDITION_PARAM_SPECIALSKILL_MANALEECHAMOUNT: {
+			specialSkills[SPECIALSKILL_MANALEECHAMOUNT] = value;
+			return true;
+		}
+
 		case CONDITION_PARAM_STAT_MAXHITPOINTS: {
 			stats[STAT_MAXHITPOINTS] = value;
 			return true;
@@ -691,36 +733,6 @@ bool ConditionAttributes::setParam(ConditionParam_t param, int32_t value)
 
 		case CONDITION_PARAM_DISABLE_DEFENSE: {
 			disableDefense = (value != 0);
-			return true;
-		}
-
-		case CONDITION_PARAM_SPECIALSKILL_CRITICALHITCHANCE: {
-			specialSkills[SPECIALSKILL_CRITICALHITCHANCE] = value;
-			return true;
-		}
-
-		case CONDITION_PARAM_SPECIALSKILL_CRITICALHITAMOUNT: {
-			specialSkills[SPECIALSKILL_CRITICALHITAMOUNT] = value;
-			return true;
-		}
-
-		case CONDITION_PARAM_SPECIALSKILL_LIFELEECHCHANCE: {
-			specialSkills[SPECIALSKILL_LIFELEECHCHANCE] = value;
-			return true;
-		}
-
-		case CONDITION_PARAM_SPECIALSKILL_LIFELEECHAMOUNT: {
-			specialSkills[SPECIALSKILL_LIFELEECHAMOUNT] = value;
-			return true;
-		}
-
-		case CONDITION_PARAM_SPECIALSKILL_MANALEECHCHANCE: {
-			specialSkills[SPECIALSKILL_MANALEECHCHANCE] = value;
-			return true;
-		}
-
-		case CONDITION_PARAM_SPECIALSKILL_MANALEECHAMOUNT: {
-			specialSkills[SPECIALSKILL_MANALEECHAMOUNT] = value;
 			return true;
 		}
 
@@ -890,17 +902,16 @@ bool ConditionRegeneration::executeCondition(Creature* creature, int32_t interva
 			if (player) {
 				std::string healString = std::to_string(realHealthGain) + (realHealthGain != 1 ? " hitpoints." : " hitpoint.");
 
-				TextMessage message(MESSAGE_HEALED, "You were healed for " + healString);
-				message.position = player->getPosition();
-				message.primary.value = realHealthGain;
-				message.primary.color = TEXTCOLOR_MAYABLUE;
+				TextMessage message(MESSAGE_STATUS_DEFAULT, "You were healed for " + healString);
 				player->sendTextMessage(message);
+
+				g_game.addAnimatedText(std::to_string(realHealthGain), player->getPosition(), TEXTCOLOR_MAYABLUE);
 
 				SpectatorVec spectators;
 				g_game.map.getSpectators(spectators, player->getPosition(), false, true);
 				spectators.erase(player);
 				if (!spectators.empty()) {
-					message.type = MESSAGE_HEALED_OTHERS;
+					message.type = MESSAGE_STATUS_DEFAULT;
 					message.text = player->getName() + " was healed for " + healString;
 					for (Creature* spectator : spectators) {
 						spectator->getPlayer()->sendTextMessage(message);
@@ -921,17 +932,16 @@ bool ConditionRegeneration::executeCondition(Creature* creature, int32_t interva
 			if (isBuff && realManaGain > 0) {
 				std::string manaGainString = std::to_string(realManaGain);
 
-				TextMessage message(MESSAGE_HEALED, "You gained " + manaGainString + " mana.");
-				message.position = player->getPosition();
-				message.primary.value = realManaGain;
-				message.primary.color = TEXTCOLOR_MAYABLUE;
+				TextMessage message(MESSAGE_STATUS_DEFAULT, "You gained " + manaGainString + " mana.");
 				player->sendTextMessage(message);
+
+				g_game.addAnimatedText(std::to_string(realManaGain), player->getPosition(), TEXTCOLOR_BLUE);
 
 				SpectatorVec spectators;
 				g_game.map.getSpectators(spectators, player->getPosition(), false, true);
 				spectators.erase(player);
 				if (!spectators.empty()) {
-					message.type = MESSAGE_HEALED_OTHERS;
+					message.type = MESSAGE_STATUS_DEFAULT;
 					message.text = player->getName() + " gained " + manaGainString + " mana.";
 					for (Creature* spectator : spectators) {
 						spectator->getPlayer()->sendTextMessage(message);
@@ -1475,10 +1485,6 @@ uint32_t ConditionDamage::getIcons() const
 			icons |= ICON_CURSED;
 			break;
 
-		case CONDITION_BLEEDING:
-			icons |= ICON_BLEEDING;
-			break;
-
 		default:
 			break;
 	}
@@ -1662,15 +1668,13 @@ bool ConditionInvisible::startCondition(Creature* creature)
 		return false;
 	}
 
-	if (!creature->isInGhostMode()) {
-		g_game.internalCreatureChangeVisible(creature, false);
-	}
+	g_game.internalCreatureChangeVisible(creature, false);
 	return true;
 }
 
 void ConditionInvisible::endCondition(Creature* creature)
 {
-	if (!creature->isInGhostMode() && !creature->isInvisible()) {
+	if (!creature->isInvisible()) {
 		g_game.internalCreatureChangeVisible(creature, true);
 	}
 }
@@ -1859,64 +1863,6 @@ void ConditionLight::serialize(PropWriteStream& propWriteStream)
 
 	propWriteStream.write<uint8_t>(CONDITIONATTR_LIGHTINTERVAL);
 	propWriteStream.write<uint32_t>(lightChangeInterval);
-}
-
-void ConditionSpellCooldown::addCondition(Creature* creature, const Condition* condition)
-{
-	if (updateCondition(condition)) {
-		setTicks(condition->getTicks());
-
-		if (subId != 0 && ticks > 0) {
-			Player* player = creature->getPlayer();
-			if (player) {
-				player->sendSpellCooldown(subId, ticks);
-			}
-		}
-	}
-}
-
-bool ConditionSpellCooldown::startCondition(Creature* creature)
-{
-	if (!Condition::startCondition(creature)) {
-		return false;
-	}
-
-	if (subId != 0 && ticks > 0) {
-		Player* player = creature->getPlayer();
-		if (player) {
-			player->sendSpellCooldown(subId, ticks);
-		}
-	}
-	return true;
-}
-
-void ConditionSpellGroupCooldown::addCondition(Creature* creature, const Condition* condition)
-{
-	if (updateCondition(condition)) {
-		setTicks(condition->getTicks());
-
-		if (subId != 0 && ticks > 0) {
-			Player* player = creature->getPlayer();
-			if (player) {
-				player->sendSpellGroupCooldown(static_cast<SpellGroup_t>(subId), ticks);
-			}
-		}
-	}
-}
-
-bool ConditionSpellGroupCooldown::startCondition(Creature* creature)
-{
-	if (!Condition::startCondition(creature)) {
-		return false;
-	}
-
-	if (subId != 0 && ticks > 0) {
-		Player* player = creature->getPlayer();
-		if (player) {
-			player->sendSpellGroupCooldown(static_cast<SpellGroup_t>(subId), ticks);
-		}
-	}
-	return true;
 }
 
 bool ConditionDrunk::startCondition(Creature* creature)

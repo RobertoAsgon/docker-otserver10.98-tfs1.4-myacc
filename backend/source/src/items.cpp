@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -28,6 +44,7 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"moveable", ITEM_PARSE_MOVEABLE},
 	{"movable", ITEM_PARSE_MOVEABLE},
 	{"blockprojectile", ITEM_PARSE_BLOCKPROJECTILE},
+	{"ignoreblocking", ITEM_PARSE_IGNOREBLOCKING},
 	{"allowpickupable", ITEM_PARSE_PICKUPABLE},
 	{"pickupable", ITEM_PARSE_PICKUPABLE},
 	{"forceserialize", ITEM_PARSE_FORCESERIALIZE},
@@ -36,6 +53,7 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"corpsetype", ITEM_PARSE_CORPSETYPE},
 	{"containersize", ITEM_PARSE_CONTAINERSIZE},
 	{"fluidsource", ITEM_PARSE_FLUIDSOURCE},
+	{"fluidcontainer", ITEM_PARSE_FLUIDCONTAINER},
 	{"readable", ITEM_PARSE_READABLE},
 	{"writeable", ITEM_PARSE_WRITEABLE},
 	{"maxtextlen", ITEM_PARSE_MAXTEXTLEN},
@@ -134,6 +152,7 @@ const std::unordered_map<std::string, ItemParseAttributes_t> ItemParseAttributes
 	{"blocking", ITEM_PARSE_BLOCKING},
 	{"allowdistread", ITEM_PARSE_ALLOWDISTREAD},
 	{"storeitem", ITEM_PARSE_STOREITEM},
+	{"worth", ITEM_PARSE_WORTH},
 };
 
 const std::unordered_map<std::string, ItemTypes_t> ItemTypesMap = {
@@ -210,6 +229,7 @@ void Items::clear()
 	items.clear();
 	clientIdToServerIdMap.clear();
 	nameToItems.clear();
+	currencyItems.clear();
 	inventory.clear();
 }
 
@@ -277,7 +297,7 @@ bool Items::loadFromOtb(const std::string& file)
 	} else if (majorVersion != 3) {
 		std::cout << "Old version detected, a newer version of items.otb is required." << std::endl;
 		return false;
-	} else if (minorVersion < CLIENT_VERSION_1098) {
+	} else if (minorVersion < CLIENT_VERSION_860_OLD) {
 		std::cout << "A newer version of items.otb is required." << std::endl;
 		return false;
 	}
@@ -379,13 +399,6 @@ bool Items::loadFromOtb(const std::string& file)
 					break;
 				}
 
-				case ITEM_ATTR_CLASSIFICATION: {
-					if (!stream.skip(1)) {
-						return false;
-					}
-					break;
-				}
-
 				default: {
 					//skip unknown attributes
 					if (!stream.skip(datalen)) {
@@ -427,7 +440,6 @@ bool Items::loadFromOtb(const std::string& file)
 			case ITEM_GROUP_FLUID:
 			case ITEM_GROUP_CHARGES:
 			case ITEM_GROUP_DEPRECATED:
-			case ITEM_GROUP_PODIUM:
 				break;
 			default:
 				return false;
@@ -450,7 +462,6 @@ bool Items::loadFromOtb(const std::string& file)
 		iType.rotatable = hasBitSet(FLAG_ROTATABLE, flags);
 		iType.canReadText = hasBitSet(FLAG_READABLE, flags);
 		iType.lookThrough = hasBitSet(FLAG_LOOKTHROUGH, flags);
-		iType.isAnimation = hasBitSet(FLAG_ANIMATION, flags);
 		// iType.walkStack = !hasBitSet(FLAG_FULLTILE, flags);
 		iType.forceUse = hasBitSet(FLAG_FORCEUSE, flags);
 
@@ -547,7 +558,12 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 
 	it.name = itemNode.attribute("name").as_string();
 
-	nameToItems.insert({ asLowerCaseString(it.name), id });
+	if (!it.name.empty()) {
+		std::string lowerCaseName = asLowerCaseString(it.name);
+		if (nameToItems.find(lowerCaseName) == nameToItems.end()) {
+			nameToItems.emplace(std::move(lowerCaseName), id);
+		}
+	}
 
 	pugi::xml_attribute articleAttribute = itemNode.attribute("article");
 	if (articleAttribute) {
@@ -655,8 +671,13 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 					break;
 				}
 
+				case ITEM_PARSE_IGNOREBLOCKING: {
+					it.ignoreBlocking = valueAttribute.as_bool();
+					break;
+				}
+
 				case ITEM_PARSE_PICKUPABLE: {
-					it.allowPickupable = valueAttribute.as_bool();
+					it.pickupable = valueAttribute.as_bool();
 					break;
 				}
 
@@ -699,6 +720,13 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 						it.fluidSource = it2->second;
 					} else {
 						std::cout << "[Warning - Items::parseItemNode] Unknown fluidSource: " << valueAttribute.as_string() << std::endl;
+					}
+					break;
+				}
+
+				case ITEM_PARSE_FLUIDCONTAINER: {
+					if (valueAttribute.as_bool()) {
+						it.group = ITEM_GROUP_FLUID;
 					}
 					break;
 				}
@@ -1355,6 +1383,17 @@ void Items::parseItemNode(const pugi::xml_node& itemNode, uint16_t id)
 					break;
 				}
 
+				case ITEM_PARSE_WORTH: {
+					uint64_t worth = pugi::cast<uint64_t>(valueAttribute.value());
+					if (currencyItems.find(worth) != currencyItems.end()) {
+						std::cout << "[Warning - Items::parseItemNode] Duplicated currency worth. Item " << id << " redefines worth " << worth << std::endl;
+					} else {
+						currencyItems.insert(CurrencyMap::value_type(worth, id));
+						it.worth = worth;
+					}
+					break;
+				}
+
 				default: {
 					// It should not ever get to here, only if you add a new key to the map and don't configure a case for it.
 					std::cout << "[Warning - Items::parseItemNode] Not configured key value: " << keyAttribute.as_string() << std::endl;
@@ -1400,8 +1439,11 @@ const ItemType& Items::getItemIdByClientId(uint16_t spriteId) const
 
 uint16_t Items::getItemIdByName(const std::string& name)
 {
-	auto result = nameToItems.find(asLowerCaseString(name));
+	if (name.empty()) {
+		return 0;
+	}
 
+	auto result = nameToItems.find(asLowerCaseString(name));
 	if (result == nameToItems.end())
 		return 0;
 

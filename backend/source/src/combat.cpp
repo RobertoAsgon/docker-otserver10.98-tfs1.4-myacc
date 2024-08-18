@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -243,9 +259,8 @@ ReturnValue Combat::canTargetCreature(Player* attacker, Creature* target)
 	if (attacker->hasFlag(PlayerFlag_CannotUseCombat) || !target->isAttackable()) {
 		if (target->getPlayer()) {
 			return RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER;
-		} else {
-			return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
 		}
+		return RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE;
 	}
 
 	if (target->getPlayer()) {
@@ -607,10 +622,6 @@ void Combat::combatTileEffects(const SpectatorVec& spectators, Creature* caster,
 						itemId = ITEM_POISONFIELD_NOPVP;
 					} else if (itemId == ITEM_ENERGYFIELD_PVP) {
 						itemId = ITEM_ENERGYFIELD_NOPVP;
-					} else if (itemId == ITEM_MAGICWALL) {
-						itemId = ITEM_MAGICWALL_NOPVP;
-					} else if (itemId == ITEM_WILDGROWTH) {
-						itemId = ITEM_WILDGROWTH_NOPVP;
 					}
 				} else if (itemId == ITEM_FIREFIELD_PVP_FULL || itemId == ITEM_POISONFIELD_PVP || itemId == ITEM_ENERGYFIELD_PVP) {
 					casterPlayer->addInFightTicks();
@@ -874,7 +885,7 @@ void Combat::doTargetCombat(Creature* caster, Creature* target, CombatDamage& da
 		}
 
 		if (damage.critical) {
-			g_game.addMagicEffect(target->getPosition(), CONST_ME_CRITICAL_DAMAGE);
+			g_game.addMagicEffect(target->getPosition(), CONST_ME_BLOODYSTEPS);
 		}
 
 		if (!damage.leeched && damage.primary.type != COMBAT_HEALING && casterPlayer && damage.origin != ORIGIN_CONDITION) {
@@ -1013,7 +1024,7 @@ void Combat::doAreaCombat(Creature* caster, const Position& position, const Area
 		if (damageCopy.critical) {
 			damageCopy.primary.value += playerCombatReduced ? criticalPrimary / 2 : criticalPrimary;
 			damageCopy.secondary.value += playerCombatReduced ? criticalSecondary / 2 : criticalSecondary;
-			g_game.addMagicEffect(creature->getPosition(), CONST_ME_CRITICAL_DAMAGE);
+			g_game.addMagicEffect(creature->getPosition(), CONST_ME_BLOODYSTEPS);
 		}
 
 		bool success = false;
@@ -1408,6 +1419,41 @@ void AreaCombat::setupArea(int32_t radius)
 	setupArea(vec, 13);
 }
 
+void AreaCombat::setupAreaRing(int32_t ring)
+{
+	int32_t area[13][13] = {
+		{0, 0, 0, 0, 0, 7, 7, 7, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 7, 6, 6, 6, 7, 0, 0, 0, 0},
+		{0, 0, 0, 7, 6, 5, 5, 5, 6, 7, 0, 0, 0},
+		{0, 0, 7, 6, 5, 4, 4, 4, 5, 6, 7, 0, 0},
+		{0, 7, 6, 5, 4, 3, 3, 3, 4, 5, 6, 7, 0},
+		{7, 6, 5, 4, 3, 2, 0, 2, 3, 4, 5, 6, 7},
+		{7, 6, 5, 4, 3, 0, 1, 0, 3, 4, 5, 6, 7},
+		{7, 6, 5, 4, 3, 2, 0, 2, 3, 4, 5, 6, 7},
+		{0, 7, 6, 5, 4, 3, 3, 3, 4, 5, 6, 7, 0},
+		{0, 0, 7, 6, 5, 4, 4, 4, 5, 6, 7, 0, 0},
+		{0, 0, 0, 7, 6, 5, 5, 5, 6, 7, 0, 0, 0},
+		{0, 0, 0, 0, 7, 6, 6, 6, 7, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 7, 7, 7, 0, 0, 0, 0, 0}
+	};
+
+	std::vector<uint32_t> vec;
+	vec.reserve(13 * 13);
+	for (auto& row : area) {
+		for (int cell : row) {
+			if (cell == 1) {
+				vec.push_back(3);
+			} else if (cell > 0 && cell == ring) {
+				vec.push_back(1);
+			} else {
+				vec.push_back(0);
+			}
+		}
+	}
+
+	setupArea(vec, 13);
+}
+
 void AreaCombat::setupExtArea(const std::vector<uint32_t>& vec, uint32_t rows)
 {
 	if (vec.empty()) {
@@ -1427,23 +1473,6 @@ void AreaCombat::setupExtArea(const std::vector<uint32_t>& vec, uint32_t rows)
 
 void MagicField::onStepInField(Creature* creature)
 {
-	//remove magic walls/wild growth
-	if (id == ITEM_MAGICWALL || id == ITEM_WILDGROWTH || id == ITEM_MAGICWALL_SAFE || id == ITEM_WILDGROWTH_SAFE || isBlocking()) {
-		if (!creature->isInGhostMode()) {
-			g_game.internalRemoveItem(this, 1);
-		}
-
-		return;
-	}
-
-	//remove magic walls/wild growth (only nopvp tiles/world)
-	if (id == ITEM_MAGICWALL_NOPVP || id == ITEM_WILDGROWTH_NOPVP) {
-		if (g_game.getWorldType() == WORLD_TYPE_NO_PVP || getTile()->hasFlag(TILESTATE_NOPVPZONE)) {
-			g_game.internalRemoveItem(this, 1);
-		}
-		return;
-	}
-
 	const ItemType& it = items[getID()];
 	if (it.conditionDamage) {
 		Condition* conditionCopy = it.conditionDamage->clone();

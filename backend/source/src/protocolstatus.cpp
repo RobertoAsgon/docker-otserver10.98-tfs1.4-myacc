@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -30,7 +46,7 @@ void ProtocolStatus::onRecvFirstMessage(NetworkMessage& msg)
 	uint32_t ip = getIP();
 	if (ip != 0x0100007F) {
 		std::string ipStr = convertIPToString(ip);
-		if (ipStr != g_config.getString(ConfigManager::IP)) {
+		if (ipStr != g_config.getString(ConfigManager::IP_STRING)) {
 			std::map<uint32_t, int64_t>::const_iterator it = ipConnectMap.find(ip);
 			if (it != ipConnectMap.end() && (OTSYS_TIME() < (it->second + g_config.getNumber(ConfigManager::STATUSQUERY_TIMEOUT)))) {
 				disconnect();
@@ -87,7 +103,7 @@ void ProtocolStatus::sendStatusString()
 	pugi::xml_node serverinfo = tsqp.append_child("serverinfo");
 	uint64_t uptime = (OTSYS_TIME() - ProtocolStatus::start) / 1000;
 	serverinfo.append_attribute("uptime") = std::to_string(uptime).c_str();
-	serverinfo.append_attribute("ip") = g_config.getString(ConfigManager::IP).c_str();
+	serverinfo.append_attribute("ip") = g_config.getString(ConfigManager::IP_STRING).c_str();
 	serverinfo.append_attribute("servername") = g_config.getString(ConfigManager::SERVER_NAME).c_str();
 	serverinfo.append_attribute("port") = std::to_string(g_config.getNumber(ConfigManager::LOGIN_PORT)).c_str();
 	serverinfo.append_attribute("location") = g_config.getString(ConfigManager::LOCATION).c_str();
@@ -146,7 +162,7 @@ void ProtocolStatus::sendInfo(uint16_t requestedInfo, const std::string& charact
 	if (requestedInfo & REQUEST_BASIC_SERVER_INFO) {
 		output->addByte(0x10);
 		output->addString(g_config.getString(ConfigManager::SERVER_NAME));
-		output->addString(g_config.getString(ConfigManager::IP));
+		output->addString(g_config.getString(ConfigManager::IP_STRING));
 		output->addString(std::to_string(g_config.getNumber(ConfigManager::LOGIN_PORT)));
 	}
 

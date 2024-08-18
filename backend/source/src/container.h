@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_CONTAINER_H_5590165FD8A2451B98D71F13CD3ED8DC
 #define FS_CONTAINER_H_5590165FD8A2451B98D71F13CD3ED8DC
@@ -13,7 +29,6 @@
 class Container;
 class DepotChest;
 class DepotLocker;
-class StoreInbox;
 
 class ContainerIterator
 {
@@ -36,8 +51,7 @@ class Container : public Item, public Cylinder
 {
 	public:
 		explicit Container(uint16_t type);
-		Container(uint16_t type, uint16_t size, bool unlocked = true, bool pagination = false);
-		explicit Container(Tile* tile);
+		Container(uint16_t type, uint16_t size);
 		~Container();
 
 		// non-copyable
@@ -57,13 +71,6 @@ class Container : public Item, public Cylinder
 			return nullptr;
 		}
 		virtual const DepotLocker* getDepotLocker() const {
-			return nullptr;
-		}
-
-		virtual StoreInbox* getStoreInbox() {
-			return nullptr;
-		}
-		virtual const StoreInbox* getStoreInbox() const {
 			return nullptr;
 		}
 
@@ -96,20 +103,12 @@ class Container : public Item, public Cylinder
 
 		std::string getName(bool addArticle = false) const;
 
-		bool hasParent() const;
 		void addItem(Item* item);
 		Item* getItemByIndex(size_t index) const;
 		bool isHoldingItem(const Item* item) const;
 
 		uint32_t getItemHoldingCount() const;
 		uint32_t getWeight() const override final;
-
-		bool isUnlocked() const {
-			return unlocked;
-		}
-		bool hasPagination() const {
-			return pagination;
-		}
 
 		//cylinder implementations
 		virtual ReturnValue queryAdd(int32_t index, const Thing& thing, uint32_t count,
@@ -154,9 +153,6 @@ class Container : public Item, public Cylinder
 		uint32_t maxSize;
 		uint32_t totalWeight = 0;
 		uint32_t serializationCount = 0;
-
-		bool unlocked;
-		bool pagination;
 
 		void onAddContainerItem(Item* item);
 		void onUpdateContainerItem(uint32_t index, Item* oldItem, Item* newItem);

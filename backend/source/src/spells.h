@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_SPELLS_H_D78A7CCB7080406E8CAA6B1D31D3DA71
 #define FS_SPELLS_H_D78A7CCB7080406E8CAA6B1D31D3DA71
@@ -198,13 +214,6 @@ class Spell : public BaseSpell
 		void setSecondaryGroup(SpellGroup_t g) {
 			secondaryGroup = g;
 		}
-
-		uint32_t getCooldown() const {
-			return cooldown;
-		}
-		void setCooldown(uint32_t cd) {
-			cooldown = cd;
-		}
 		uint32_t getSecondaryCooldown() const {
 			return secondaryGroupCooldown;
 		}
@@ -216,6 +225,13 @@ class Spell : public BaseSpell
 		}
 		void setGroupCooldown(uint32_t cd) {
 			groupCooldown = cd;
+		}
+
+		uint32_t getCooldown() const {
+			return cooldown;
+		}
+		void setCooldown(uint32_t cd) {
+			cooldown = cd;
 		}
 
 		int32_t getRange() const {
@@ -286,9 +302,9 @@ class Spell : public BaseSpell
 		SpellGroup_t group = SPELLGROUP_NONE;
 		SpellGroup_t secondaryGroup = SPELLGROUP_NONE;
 
-		uint32_t cooldown = 1000;
 		uint32_t groupCooldown = 1000;
 		uint32_t secondaryGroupCooldown = 0;
+		uint32_t cooldown = 1000;
 		uint32_t level = 0;
 		uint32_t magLevel = 0;
 		int32_t range = -1;

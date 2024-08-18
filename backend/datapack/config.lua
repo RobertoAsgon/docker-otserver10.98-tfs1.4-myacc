@@ -15,6 +15,7 @@ whiteSkullTime = 15 * 60
 stairJumpExhaustion = 2000
 experienceByKillingPlayers = false
 expFromPlayersLevelRange = 75
+pzLockSkullAttacker = false
 
 -- Connection Config
 -- NOTE: maxPlayers set to 0 means no limit
@@ -70,8 +71,7 @@ mysqlHost = "db"
 mysqlUser = "root"
 mysqlPass = "1234"
 mysqlDatabase = "otserv"
-mysqlPort = "3306"
-passwordType = "sha1"
+mysqlPort = 3306
 mysqlSock = ""
 
 -- Misc.
@@ -91,6 +91,8 @@ showScriptsLogInConsole = false
 showOnlineStatusInCharlist = false
 yellMinimumLevel = 2
 yellAlwaysAllowPremium = false
+minimumLevelToSendPrivate = 1
+premiumToSendPrivate = false
 forceMonsterTypesOnLoad = true
 cleanProtectionZones = false
 luaItemDesc = false
