@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_CREATURE_H_5363C04015254E298F84E6D59A139508
 #define FS_CREATURE_H_5363C04015254E298F84E6D59A139508
@@ -27,7 +43,6 @@ enum slots_t : uint8_t {
 	CONST_SLOT_FEET = 8,
 	CONST_SLOT_RING = 9,
 	CONST_SLOT_AMMO = 10,
-	CONST_SLOT_STORE_INBOX = 11,
 
 	CONST_SLOT_FIRST = CONST_SLOT_HEAD,
 	CONST_SLOT_LAST = CONST_SLOT_AMMO,
@@ -81,8 +96,6 @@ class Creature : virtual public Thing
 		Creature();
 
 	public:
-		static double speedA, speedB, speedC;
-
 		virtual ~Creature();
 
 		// non-copyable
@@ -298,10 +311,6 @@ class Creature : virtual public Thing
 		}
 		virtual float getDefenseFactor() const {
 			return 1.0f;
-		}
-
-		virtual uint8_t getSpeechBubble() const {
-			return SPEECHBUBBLE_NONE;
 		}
 
 		bool addCondition(Condition* condition, bool force = false);

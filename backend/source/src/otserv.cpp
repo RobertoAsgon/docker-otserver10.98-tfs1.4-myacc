@@ -1,13 +1,27 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
 #include "server.h"
 
 #include "game.h"
-
-#include "iomarket.h"
 
 #include "configmanager.h"
 #include "scriptmanager.h"
@@ -20,7 +34,7 @@
 #include "databasetasks.h"
 #include "script.h"
 #include <fstream>
-#include <fmt/color.h>
+#include <fmt/format.h>
 #if __has_include("gitmetadata.h")
 	#include "gitmetadata.h"
 #endif
@@ -42,7 +56,7 @@ std::unique_lock<std::mutex> g_loaderUniqueLock(g_loaderLock);
 
 void startupErrorMessage(const std::string& errorStr)
 {
-	fmt::print(fg(fmt::color::crimson) | fmt::emphasis::bold, "> ERROR: {:s}\n", errorStr);
+	std::cout << "> ERROR: " << errorStr << std::endl;
 	g_loaderSignal.notify_all();
 }
 
@@ -124,7 +138,8 @@ void printServerVersion()
 	std::cout << std::endl;
 
 	std::cout << "A server developed by " << STATUS_SERVER_DEVELOPERS << std::endl;
-	std::cout << "Visit our forum for updates, support, and resources: https://otland.net/." << std::endl;
+	std::cout << "Downgraded and further developed by Nekiro" << std::endl;
+	std::cout << "Visit our forum for updates, support, and resources: http://otland.net/." << std::endl;
 	std::cout << std::endl;
 }
 
@@ -173,7 +188,6 @@ void mainLoader(int, char*[], ServiceManager* services)
 #endif
 
 	//set RSA key
-	std::cout << ">> Loading RSA key " << std::endl;
 	try {
 		g_RSA.loadPEM("key.pem");
 	} catch(const std::exception& e) {
@@ -213,11 +227,12 @@ void mainLoader(int, char*[], ServiceManager* services)
 	}
 
 	// load item data
-	std::cout << ">> Loading items" << std::endl;
+	std::cout << ">> Loading items... ";
 	if (!Item::items.loadFromOtb("data/items/items.otb")) {
 		startupErrorMessage("Unable to load items (OTB)!");
 		return;
 	}
+	std::cout << fmt::format("OTB v{:d}.{:d}.{:d}", Item::items.majorVersion, Item::items.minorVersion, Item::items.buildNumber) << std::endl;
 
 	if (!Item::items.loadFromXml()) {
 		startupErrorMessage("Unable to load items (XML)!");
@@ -305,9 +320,6 @@ void mainLoader(int, char*[], ServiceManager* services)
 
 	g_game.map.houses.payHouses(rentPeriod);
 
-	IOMarket::checkExpiredOffers();
-	IOMarket::getInstance().updateStatistics();
-
 	std::cout << ">> Loaded all modules, server starting up..." << std::endl;
 
 #ifndef _WIN32
@@ -343,7 +355,7 @@ bool argumentsHandler(const StringVector& args)
 		if (tmp[0] == "--config")
 			g_config.setString(ConfigManager::CONFIG_FILE, tmp[1]);
 		else if (tmp[0] == "--ip")
-			g_config.setString(ConfigManager::IP, tmp[1]);
+			g_config.setString(ConfigManager::IP_STRING, tmp[1]);
 		else if (tmp[0] == "--login-port")
 			g_config.setNumber(ConfigManager::LOGIN_PORT, std::stoi(tmp[1]));
 		else if (tmp[0] == "--game-port")

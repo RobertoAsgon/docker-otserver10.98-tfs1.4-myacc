@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_ITEMS_H_4E2221634ABA45FE85BA50F710669B3C
 #define FS_ITEMS_H_4E2221634ABA45FE85BA50F710669B3C
@@ -56,11 +72,13 @@ enum ItemParseAttributes_t {
 	ITEM_PARSE_MOVEABLE,
 	ITEM_PARSE_BLOCKPROJECTILE,
 	ITEM_PARSE_PICKUPABLE,
+	ITEM_PARSE_IGNOREBLOCKING,
 	ITEM_PARSE_FORCESERIALIZE,
 	ITEM_PARSE_FLOORCHANGE,
 	ITEM_PARSE_CORPSETYPE,
 	ITEM_PARSE_CONTAINERSIZE,
 	ITEM_PARSE_FLUIDSOURCE,
+	ITEM_PARSE_FLUIDCONTAINER,
 	ITEM_PARSE_READABLE,
 	ITEM_PARSE_WRITEABLE,
 	ITEM_PARSE_MAXTEXTLEN,
@@ -153,6 +171,7 @@ enum ItemParseAttributes_t {
 	ITEM_PARSE_BLOCKING,
 	ITEM_PARSE_ALLOWDISTREAD,
 	ITEM_PARSE_STOREITEM,
+	ITEM_PARSE_WORTH,
 };
 
 struct Abilities {
@@ -244,7 +263,7 @@ class ItemType
 			return (type == ITEM_TYPE_RUNE);
 		}
 		bool isPickupable() const {
-			return (allowPickupable || pickupable);
+			return pickupable;
 		}
 		bool isUseable() const {
 			return (useable);
@@ -285,7 +304,6 @@ class ItemType
 		uint16_t id = 0;
 		uint16_t clientId = 0;
 		bool stackable = false;
-		bool isAnimation = false;
 
 		std::string name;
 		std::string article;
@@ -314,6 +332,7 @@ class ItemType
 		uint16_t rotateTo = 0;
 		int32_t runeMagLevel = 0;
 		int32_t runeLevel = 0;
+		uint64_t worth = 0;
 
 		CombatType_t combatType = COMBAT_NONE;
 
@@ -353,7 +372,7 @@ class ItemType
 		bool blockPickupable = false;
 		bool blockProjectile = false;
 		bool blockPathFind = false;
-		bool allowPickupable = false;
+		bool ignoreBlocking = false;
 		bool showDuration = false;
 		bool showCharges = false;
 		bool showAttributes = false;
@@ -377,8 +396,10 @@ class ItemType
 class Items
 {
 	public:
-		using NameMap = std::unordered_multimap<std::string, uint16_t>;
+		using NameMap = std::unordered_map<std::string, uint16_t>;
 		using InventoryVector = std::vector<uint16_t>;
+
+		using CurrencyMap = std::map<uint64_t, uint16_t, std::greater<uint64_t>>;
 
 		Items();
 
@@ -417,6 +438,7 @@ class Items
 		}
 
 		NameMap nameToItems;
+		CurrencyMap currencyItems;
 
 	private:
 		std::vector<ItemType> items;

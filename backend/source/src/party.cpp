@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -31,7 +47,6 @@ void Party::disband()
 	currentLeader->setParty(nullptr);
 	currentLeader->sendClosePrivate(CHANNEL_PARTY);
 	g_game.updatePlayerShield(currentLeader);
-	g_game.updatePlayerHelpers(*currentLeader);
 	currentLeader->sendCreatureSkull(currentLeader);
 	currentLeader->sendTextMessage(MESSAGE_INFO_DESCR, "Your party has been disbanded.");
 
@@ -56,7 +71,6 @@ void Party::disband()
 
 		member->sendCreatureSkull(currentLeader);
 		currentLeader->sendCreatureSkull(member);
-		g_game.updatePlayerHelpers(*member);
 	}
 	memberList.clear();
 	delete this;
@@ -98,12 +112,10 @@ bool Party::leaveParty(Player* player)
 	player->setParty(nullptr);
 	player->sendClosePrivate(CHANNEL_PARTY);
 	g_game.updatePlayerShield(player);
-	g_game.updatePlayerHelpers(*player);
 
 	for (Player* member : memberList) {
 		member->sendCreatureSkull(player);
 		player->sendPlayerPartyIcons(member);
-		g_game.updatePlayerHelpers(*member);
 	}
 
 	leader->sendCreatureSkull(player);
@@ -193,8 +205,6 @@ bool Party::joinParty(Player& player)
 
 	memberList.push_back(&player);
 
-	g_game.updatePlayerHelpers(player);
-
 	player.removePartyInvitation(this);
 	updateSharedExperience();
 
@@ -221,12 +231,6 @@ bool Party::removeInvite(Player& player, bool removeFromPlayer/* = true*/)
 
 	if (empty()) {
 		disband();
-	} else {
-		for (Player* member : memberList) {
-			g_game.updatePlayerHelpers(*member);
-		}
-
-		g_game.updatePlayerHelpers(*leader);
 	}
 
 	return true;
@@ -254,11 +258,6 @@ bool Party::invitePlayer(Player& player)
 	}
 
 	inviteList.push_back(&player);
-
-	for (Player* member : memberList) {
-		g_game.updatePlayerHelpers(*member);
-	}
-	g_game.updatePlayerHelpers(*leader);
 
 	leader->sendCreatureShield(&player);
 	player.sendCreatureShield(leader);
@@ -305,34 +304,12 @@ void Party::broadcastPartyMessage(MessageClasses msgClass, const std::string& ms
 void Party::updateSharedExperience()
 {
 	if (sharedExpActive) {
-		bool result = getSharedExperienceStatus() == SHAREDEXP_OK;
+		bool result = canEnableSharedExperience();
 		if (result != sharedExpEnabled) {
 			sharedExpEnabled = result;
 			updateAllPartyIcons();
 		}
 	}
-}
-
-namespace {
-
-const char* getSharedExpReturnMessage(SharedExpStatus_t value)
-{
-	switch (value) {
-		case SHAREDEXP_OK:
-			return "Shared Experience is now active.";
-		case SHAREDEXP_TOOFARAWAY:
-			return "Shared Experience has been activated, but some members of your party are too far away.";
-		case SHAREDEXP_LEVELDIFFTOOLARGE:
-			return "Shared Experience has been activated, but the level spread of your party is too wide.";
-		case SHAREDEXP_MEMBERINACTIVE:
-			return "Shared Experience has been activated, but some members of your party are inactive.";
-		case SHAREDEXP_EMPTYPARTY:
-			return "Shared Experience has been activated, but you are alone in your party.";
-		default:
-			return "An error occured. Unable to activate shared experience.";
-	}
-}
-
 }
 
 bool Party::setSharedExperience(Player* player, bool sharedExpActive)
@@ -348,9 +325,13 @@ bool Party::setSharedExperience(Player* player, bool sharedExpActive)
 	this->sharedExpActive = sharedExpActive;
 
 	if (sharedExpActive) {
-		SharedExpStatus_t sharedExpStatus = getSharedExperienceStatus();
-		this->sharedExpEnabled = sharedExpStatus == SHAREDEXP_OK;
-		leader->sendTextMessage(MESSAGE_INFO_DESCR, getSharedExpReturnMessage(sharedExpStatus));
+		this->sharedExpEnabled = canEnableSharedExperience();
+
+		if (this->sharedExpEnabled) {
+			leader->sendTextMessage(MESSAGE_INFO_DESCR, "Shared Experience is now active.");
+		} else {
+			leader->sendTextMessage(MESSAGE_INFO_DESCR, "Shared Experience has been activated, but some members of your party are inactive.");
+		}
 	} else {
 		leader->sendTextMessage(MESSAGE_INFO_DESCR, "Shared Experience has been deactivated.");
 	}
@@ -372,13 +353,8 @@ void Party::shareExperience(uint64_t experience, Creature* source/* = nullptr*/)
 
 bool Party::canUseSharedExperience(const Player* player) const
 {
-	return getMemberSharedExperienceStatus(player) == SHAREDEXP_OK;
-}
-
-SharedExpStatus_t Party::getMemberSharedExperienceStatus(const Player* player) const
-{
 	if (memberList.empty()) {
-		return SHAREDEXP_EMPTYPARTY;
+		return false;
 	}
 
 	uint32_t highestLevel = leader->getLevel();
@@ -390,42 +366,40 @@ SharedExpStatus_t Party::getMemberSharedExperienceStatus(const Player* player) c
 
 	uint32_t minLevel = static_cast<uint32_t>(std::ceil((static_cast<float>(highestLevel) * 2) / 3));
 	if (player->getLevel() < minLevel) {
-		return SHAREDEXP_LEVELDIFFTOOLARGE;
+		return false;
 	}
 
 	if (!Position::areInRange<EXPERIENCE_SHARE_RANGE, EXPERIENCE_SHARE_RANGE, EXPERIENCE_SHARE_FLOORS>(leader->getPosition(), player->getPosition())) {
-		return SHAREDEXP_TOOFARAWAY;
+		return false;
 	}
 
 	if (!player->hasFlag(PlayerFlag_NotGainInFight)) {
 		//check if the player has healed/attacked anything recently
 		auto it = ticksMap.find(player->getID());
 		if (it == ticksMap.end()) {
-			return SHAREDEXP_MEMBERINACTIVE;
+			return false;
 		}
 
 		uint64_t timeDiff = OTSYS_TIME() - it->second;
 		if (timeDiff > static_cast<uint64_t>(g_config.getNumber(ConfigManager::PZ_LOCKED))) {
-			return SHAREDEXP_MEMBERINACTIVE;
+			return false;
 		}
 	}
-	return SHAREDEXP_OK;
+	return true;
 }
 
-SharedExpStatus_t Party::getSharedExperienceStatus()
+bool Party::canEnableSharedExperience()
 {
-	SharedExpStatus_t leaderStatus = getMemberSharedExperienceStatus(leader);
-	if (leaderStatus != SHAREDEXP_OK) {
-		return leaderStatus;
+	if (!canUseSharedExperience(leader)) {
+		return false;
 	}
 
 	for (Player* member : memberList) {
-		SharedExpStatus_t memberStatus = getMemberSharedExperienceStatus(member);
-		if (memberStatus != SHAREDEXP_OK) {
-			return memberStatus;
+		if (!canUseSharedExperience(member)) {
+			return false;
 		}
 	}
-	return SHAREDEXP_OK;
+	return true;
 }
 
 void Party::updatePlayerTicks(Player* player, uint32_t points)

@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019 Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 #include <csignal>
@@ -15,7 +31,6 @@
 #include "weapons.h"
 #include "raids.h"
 #include "quests.h"
-#include "mounts.h"
 #include "globalevent.h"
 #include "monster.h"
 #include "events.h"
@@ -42,7 +57,20 @@ extern LuaEnvironment g_luaEnvironment;
 
 namespace {
 
-#ifndef _WIN32
+void sigbreakHandler()
+{
+	//Dispatcher thread
+	std::cout << "SIGBREAK received, shutting game server down..." << std::endl;
+	g_game.setGameState(GAME_STATE_SHUTDOWN);
+}
+
+void sigtermHandler()
+{
+	//Dispatcher thread
+	std::cout << "SIGTERM received, shutting game server down..." << std::endl;
+	g_game.setGameState(GAME_STATE_SHUTDOWN);
+}
+
 void sigusr1Handler()
 {
 	//Dispatcher thread
@@ -93,9 +121,6 @@ void sighupHandler()
 	g_game.quests.reload();
 	std::cout << "Reloaded quests." << std::endl;
 
-	g_game.mounts.reload();
-	std::cout << "Reloaded mounts." << std::endl;
-
 	g_globalEvents->reload();
 	std::cout << "Reloaded globalevents." << std::endl;
 
@@ -109,21 +134,6 @@ void sighupHandler()
 	std::cout << "Reloaded global.lua." << std::endl;
 
 	lua_gc(g_luaEnvironment.getLuaState(), LUA_GCCOLLECT, 0);
-}
-#else
-void sigbreakHandler()
-{
-	//Dispatcher thread
-	std::cout << "SIGBREAK received, shutting game server down..." << std::endl;
-	g_game.setGameState(GAME_STATE_SHUTDOWN);
-}
-#endif
-
-void sigtermHandler()
-{
-	//Dispatcher thread
-	std::cout << "SIGTERM received, shutting game server down..." << std::endl;
-	g_game.setGameState(GAME_STATE_SHUTDOWN);
 }
 
 void sigintHandler()

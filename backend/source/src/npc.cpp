@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -89,7 +105,6 @@ void Npc::reset()
 	attackable = false;
 	ignoreHeight = false;
 	focusCreature = 0;
-	speechBubble = SPEECHBUBBLE_NONE;
 
 	delete npcEventHandler;
 	npcEventHandler = nullptr;
@@ -165,10 +180,6 @@ bool Npc::loadFromXml()
 		ignoreHeight = attr.as_bool();
 	}
 
-	if ((attr = npcNode.attribute("speechbubble"))) {
-		speechBubble = pugi::cast<uint32_t>(attr.value());
-	}
-
 	if ((attr = npcNode.attribute("skull"))) {
 		setSkull(getSkullType(asLowerCaseString(attr.as_string())));
 	}
@@ -206,7 +217,6 @@ bool Npc::loadFromXml()
 		} else if ((attr = lookNode.attribute("typeex"))) {
 			defaultOutfit.lookTypeEx = pugi::cast<uint16_t>(attr.value());
 		}
-		defaultOutfit.lookMount = pugi::cast<uint16_t>(lookNode.attribute("mount").value());
 
 		currentOutfit = defaultOutfit;
 	}
@@ -463,8 +473,9 @@ bool Npc::canWalkTo(const Position& fromPos, Direction dir) const
 bool Npc::getRandomStep(Direction& dir) const
 {
 	std::vector<Direction> dirList;
-	const Position& creaturePos = getPosition();
+	dirList.reserve(4);
 
+	const Position& creaturePos = getPosition();
 	if (canWalkTo(creaturePos, DIRECTION_NORTH)) {
 		dirList.push_back(DIRECTION_NORTH);
 	}
@@ -859,7 +870,7 @@ int NpcScriptInterface::luaOpenShopWindow(lua_State* L)
 
 	npc->addShopPlayer(player);
 	player->setShopOwner(npc, buyCallback, sellCallback);
-	player->openShopWindow(npc, items);
+	player->openShopWindow(items);
 
 	pushBoolean(L, true);
 	return 1;
@@ -1064,7 +1075,7 @@ int NpcScriptInterface::luaNpcOpenShopWindow(lua_State* L)
 	npc->addShopPlayer(player);
 
 	player->setShopOwner(npc, buyCallback, sellCallback);
-	player->openShopWindow(npc, items);
+	player->openShopWindow(items);
 
 	pushBoolean(L, true);
 	return 1;

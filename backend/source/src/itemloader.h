@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_ITEMLOADER_H_107F1D3EECC94CD0A0F528843010D5D4
 #define FS_ITEMLOADER_H_107F1D3EECC94CD0A0F528843010D5D4
@@ -23,7 +39,6 @@ enum itemgroup_t {
 	ITEM_GROUP_FLUID,
 	ITEM_GROUP_DOOR, //deprecated
 	ITEM_GROUP_DEPRECATED,
-	ITEM_GROUP_PODIUM,
 
 	ITEM_GROUP_LAST
 };
@@ -51,48 +66,6 @@ enum clientVersion_t {
 	CLIENT_VERSION_855 = 18,
 	CLIENT_VERSION_860_OLD = 19,
 	CLIENT_VERSION_860 = 20,
-	CLIENT_VERSION_861 = 21,
-	CLIENT_VERSION_862 = 22,
-	CLIENT_VERSION_870 = 23,
-	CLIENT_VERSION_871 = 24,
-	CLIENT_VERSION_872 = 25,
-	CLIENT_VERSION_873 = 26,
-	CLIENT_VERSION_900 = 27,
-	CLIENT_VERSION_910 = 28,
-	CLIENT_VERSION_920 = 29,
-	CLIENT_VERSION_940 = 30,
-	CLIENT_VERSION_944_V1 = 31,
-	CLIENT_VERSION_944_V2 = 32,
-	CLIENT_VERSION_944_V3 = 33,
-	CLIENT_VERSION_944_V4 = 34,
-	CLIENT_VERSION_946 = 35,
-	CLIENT_VERSION_950 = 36,
-	CLIENT_VERSION_952 = 37,
-	CLIENT_VERSION_953 = 38,
-	CLIENT_VERSION_954 = 39,
-	CLIENT_VERSION_960 = 40,
-	CLIENT_VERSION_961 = 41,
-	CLIENT_VERSION_963 = 42,
-	CLIENT_VERSION_970 = 43,
-	CLIENT_VERSION_980 = 44,
-	CLIENT_VERSION_981 = 45,
-	CLIENT_VERSION_982 = 46,
-	CLIENT_VERSION_983 = 47,
-	CLIENT_VERSION_985 = 48,
-	CLIENT_VERSION_986 = 49,
-	CLIENT_VERSION_1010 = 50,
-	CLIENT_VERSION_1020 = 51,
-	CLIENT_VERSION_1021 = 52,
-	CLIENT_VERSION_1030 = 53,
-	CLIENT_VERSION_1031 = 54,
-	CLIENT_VERSION_1035 = 55,
-	CLIENT_VERSION_1076 = 56,
-	CLIENT_VERSION_1098 = 57,
-	CLIENT_VERSION_10100 = 58,
-	CLIENT_VERSION_1272 = 59,
-	CLIENT_VERSION_1281 = 60,
-
-	CLIENT_VERSION_LAST = CLIENT_VERSION_1281
 };
 
 enum rootattrib_ {
@@ -134,7 +107,6 @@ enum itemattrib_t {
 	ITEM_ATTR_WRITEABLE3, //deprecated
 
 	ITEM_ATTR_WAREID,
-	ITEM_ATTR_CLASSIFICATION,
 
 	ITEM_ATTR_LAST
 };
@@ -167,8 +139,6 @@ enum itemflags_t {
 	FLAG_ANIMATION = 1 << 24,
 	FLAG_FULLTILE = 1 << 25, // unused
 	FLAG_FORCEUSE = 1 << 26,
-	FLAG_AMMO = 1 << 27, // unused
-	FLAG_REPORTABLE = 1 << 28, // unused
 };
 
 //1-byte aligned structs

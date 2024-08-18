@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -66,13 +82,12 @@ bool CreatureEvents::registerEvent(Event_ptr event, const pugi::xml_node&)
 		if (!oldEvent->isLoaded() && oldEvent->getEventType() == creatureEvent->getEventType()) {
 			oldEvent->copyEvent(creatureEvent.get());
 		}
-
 		return false;
-	} else {
-		//if not, register it normally
-		creatureEvents.emplace(creatureEvent->getName(), std::move(*creatureEvent));
-		return true;
 	}
+
+	// if not, register it normally
+	creatureEvents.emplace(creatureEvent->getName(), std::move(*creatureEvent));
+	return true;
 }
 
 bool CreatureEvents::registerLuaEvent(CreatureEvent* event)
@@ -90,13 +105,12 @@ bool CreatureEvents::registerLuaEvent(CreatureEvent* event)
 		if (!oldEvent->isLoaded() && oldEvent->getEventType() == creatureEvent->getEventType()) {
 			oldEvent->copyEvent(creatureEvent.get());
 		}
-
 		return false;
-	} else {
-		//if not, register it normally
-		creatureEvents.emplace(creatureEvent->getName(), std::move(*creatureEvent));
-		return true;
 	}
+
+	// if not, register it normally
+	creatureEvents.emplace(creatureEvent->getName(), std::move(*creatureEvent));
+	return true;
 }
 
 CreatureEvent* CreatureEvents::getEventByName(const std::string& name, bool forceLoaded /*= true*/)
@@ -187,8 +201,6 @@ bool CreatureEvent::configureEvent(const pugi::xml_node& node)
 		type = CREATURE_EVENT_KILL;
 	} else if (tmpStr == "advance") {
 		type = CREATURE_EVENT_ADVANCE;
-	} else if (tmpStr == "modalwindow") {
-		type = CREATURE_EVENT_MODALWINDOW;
 	} else if (tmpStr == "textedit") {
 		type = CREATURE_EVENT_TEXTEDIT;
 	} else if (tmpStr == "healthchange") {
@@ -230,9 +242,6 @@ std::string CreatureEvent::getScriptEventName() const
 
 		case CREATURE_EVENT_ADVANCE:
 			return "onAdvance";
-
-		case CREATURE_EVENT_MODALWINDOW:
-			return "onModalWindow";
 
 		case CREATURE_EVENT_TEXTEDIT:
 			return "onTextEdit";
@@ -437,30 +446,6 @@ void CreatureEvent::executeOnKill(Creature* creature, Creature* target)
 	LuaScriptInterface::pushUserdata<Creature>(L, target);
 	LuaScriptInterface::setCreatureMetatable(L, -1, target);
 	scriptInterface->callVoidFunction(2);
-}
-
-void CreatureEvent::executeModalWindow(Player* player, uint32_t modalWindowId, uint8_t buttonId, uint8_t choiceId)
-{
-	//onModalWindow(player, modalWindowId, buttonId, choiceId)
-	if (!scriptInterface->reserveScriptEnv()) {
-		std::cout << "[Error - CreatureEvent::executeModalWindow] Call stack overflow" << std::endl;
-		return;
-	}
-
-	ScriptEnvironment* env = scriptInterface->getScriptEnv();
-	env->setScriptId(scriptId, scriptInterface);
-
-	lua_State* L = scriptInterface->getLuaState();
-	scriptInterface->pushFunction(scriptId);
-
-	LuaScriptInterface::pushUserdata(L, player);
-	LuaScriptInterface::setMetatable(L, -1, "Player");
-
-	lua_pushnumber(L, modalWindowId);
-	lua_pushnumber(L, buttonId);
-	lua_pushnumber(L, choiceId);
-
-	scriptInterface->callVoidFunction(4);
 }
 
 bool CreatureEvent::executeTextEdit(Player* player, Item* item, const std::string& text)

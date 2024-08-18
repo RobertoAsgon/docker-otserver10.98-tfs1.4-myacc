@@ -1,1 +1,0 @@
-a:7:{s:4:"step";s:5:"admin";s:11:"server_path";s:5:"/srv/";s:10:"mail_admin";s:15:"admin@admin.com";s:12:"mail_address";s:15:"admin@admin.com";s:13:"date_timezone";s:17:"America/Sao_Paulo";s:6:"client";s:4:"1098";s:5:"usage";s:1:"1";}

@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #ifndef FS_CREATUREEVENT_H_73FCAF4608CB41399D53C919316646A9
 #define FS_CREATUREEVENT_H_73FCAF4608CB41399D53C919316646A9
@@ -20,7 +36,6 @@ enum CreatureEventType_t {
 	CREATURE_EVENT_DEATH,
 	CREATURE_EVENT_KILL,
 	CREATURE_EVENT_ADVANCE,
-	CREATURE_EVENT_MODALWINDOW,
 	CREATURE_EVENT_TEXTEDIT,
 	CREATURE_EVENT_HEALTHCHANGE,
 	CREATURE_EVENT_MANACHANGE,
@@ -64,7 +79,6 @@ class CreatureEvent final : public Event
 		bool executeOnDeath(Creature* creature, Item* corpse, Creature* killer, Creature* mostDamageKiller, bool lastHitUnjustified, bool mostDamageUnjustified);
 		void executeOnKill(Creature* creature, Creature* target);
 		bool executeAdvance(Player* player, skills_t, uint32_t, uint32_t);
-		void executeModalWindow(Player* player, uint32_t modalWindowId, uint8_t buttonId, uint8_t choiceId);
 		bool executeTextEdit(Player* player, Item* item, const std::string& text);
 		void executeHealthChange(Creature* creature, Creature* attacker, CombatDamage& damage);
 		void executeManaChange(Creature* creature, Creature* attacker, CombatDamage& damage);

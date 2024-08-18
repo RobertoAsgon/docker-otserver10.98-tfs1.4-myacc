@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -563,17 +579,6 @@ MagicEffectNames magicEffectNames = {
 	{"smoke",		CONST_ME_SMOKE},
 	{"insects",		CONST_ME_INSECTS},
 	{"dragonhead",		CONST_ME_DRAGONHEAD},
-	{"orcshaman",		CONST_ME_ORCSHAMAN},
-	{"orcshamanfire",	CONST_ME_ORCSHAMAN_FIRE},
-	{"thunder",		CONST_ME_THUNDER},
-	{"ferumbras",		CONST_ME_FERUMBRAS},
-	{"confettihorizontal",	CONST_ME_CONFETTI_HORIZONTAL},
-	{"confettivertical",	CONST_ME_CONFETTI_VERTICAL},
-	{"blacksmoke",		CONST_ME_BLACKSMOKE},
-	{"redsmoke",		CONST_ME_REDSMOKE},
-	{"yellowsmoke",		CONST_ME_YELLOWSMOKE},
-	{"greensmoke",		CONST_ME_GREENSMOKE},
-	{"purplesmoke",		CONST_ME_PURPLESMOKE},
 };
 
 ShootTypeNames shootTypeNames = {
@@ -618,15 +623,6 @@ ShootTypeNames shootTypeNames = {
 	{"smallearth",		CONST_ANI_SMALLEARTH},
 	{"eartharrow",		CONST_ANI_EARTHARROW},
 	{"explosion",		CONST_ANI_EXPLOSION},
-	{"cake",		CONST_ANI_CAKE},
-	{"tarsalarrow",		CONST_ANI_TARSALARROW},
-	{"vortexbolt",		CONST_ANI_VORTEXBOLT},
-	{"prismaticbolt",	CONST_ANI_PRISMATICBOLT},
-	{"crystallinearrow",	CONST_ANI_CRYSTALLINEARROW},
-	{"drillbolt",		CONST_ANI_DRILLBOLT},
-	{"envenomedarrow",	CONST_ANI_ENVENOMEDARROW},
-	{"gloothspear",		CONST_ANI_GLOOTHSPEAR},
-	{"simplearrow",		CONST_ANI_SIMPLEARROW},
 };
 
 CombatTypeNames combatTypeNames = {
@@ -683,7 +679,6 @@ SkullNames skullNames = {
 	{"white",	SKULL_WHITE},
 	{"red",		SKULL_RED},
 	{"black",	SKULL_BLACK},
-	{"orange",	SKULL_ORANGE},
 };
 
 MagicEffectClasses getMagicEffect(const std::string& strValue)
@@ -740,32 +735,6 @@ Skulls_t getSkullType(const std::string& strValue)
 	return SKULL_NONE;
 }
 
-std::string getSpecialSkillName(uint8_t skillid)
-{
-	switch (skillid) {
-		case SPECIALSKILL_CRITICALHITCHANCE:
-			return "critical hit chance";
-
-		case SPECIALSKILL_CRITICALHITAMOUNT:
-			return "critical extra damage";
-
-		case SPECIALSKILL_LIFELEECHCHANCE:
-			return "hitpoints leech chance";
-
-		case SPECIALSKILL_LIFELEECHAMOUNT:
-			return "hitpoints leech amount";
-
-		case SPECIALSKILL_MANALEECHCHANCE:
-			return "manapoints leech chance";
-
-		case SPECIALSKILL_MANALEECHAMOUNT:
-			return "mana points leech amount";
-
-		default:
-			return "unknown";
-	}
-}
-
 std::string getSkillName(uint8_t skillid)
 {
 	switch (skillid) {
@@ -799,6 +768,32 @@ std::string getSkillName(uint8_t skillid)
 		default:
 			return "unknown";
 	}
+}
+
+std::string getSpecialSkillName(uint8_t skillid)
+{
+    switch (skillid) {
+        case SPECIALSKILL_CRITICALHITCHANCE:
+            return "critical hit chance";
+
+        case SPECIALSKILL_CRITICALHITAMOUNT:
+            return "critical extra damage";
+
+        case SPECIALSKILL_LIFELEECHCHANCE:
+            return "hitpoints leech chance";
+
+        case SPECIALSKILL_LIFELEECHAMOUNT:
+            return "hitpoints leech amount";
+
+        case SPECIALSKILL_MANALEECHCHANCE:
+            return "manapoints leech chance";
+
+        case SPECIALSKILL_MANALEECHAMOUNT:
+            return "mana points leech amount";
+
+        default:
+            return "unknown";
+    }
 }
 
 uint32_t adlerChecksum(const uint8_t* data, size_t length)
@@ -1215,9 +1210,6 @@ const char* getReturnMessage(ReturnValue value)
 
 		case RETURNVALUE_YOUDONTHAVEREQUIREDPROFESSION:
 			return "You don't have the required profession.";
-
-		case RETURNVALUE_CANNOTMOVEITEMISNOTSTOREITEM:
-			return "You cannot move this item into your Store inbox as it was not bought in the Store.";
 
 		case RETURNVALUE_ITEMCANNOTBEMOVEDTHERE:
 			return "This item cannot be moved there.";

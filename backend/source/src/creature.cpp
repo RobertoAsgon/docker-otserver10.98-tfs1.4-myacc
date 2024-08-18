@@ -1,5 +1,21 @@
-// Copyright 2022 The Forgotten Server Authors. All rights reserved.
-// Use of this source code is governed by the GPL-2.0 License that can be found in the LICENSE file.
+/**
+ * The Forgotten Server - a free and open-source MMORPG server emulator
+ * Copyright (C) 2019  Mark Samman <mark.samman@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
 
 #include "otpch.h"
 
@@ -8,10 +24,7 @@
 #include "monster.h"
 #include "configmanager.h"
 #include "scheduler.h"
-
-double Creature::speedA = 857.36;
-double Creature::speedB = 261.29;
-double Creature::speedC = -4795.01;
+#include <fmt/format.h>
 
 extern Game g_game;
 extern ConfigManager g_config;
@@ -365,9 +378,8 @@ int32_t Creature::getWalkCache(const Position& pos) const
 		if (std::abs(dy) <= maxWalkCacheHeight) {
 			if (localMapCache[maxWalkCacheHeight + dy][maxWalkCacheWidth + dx]) {
 				return 1;
-			} else {
-				return 0;
 			}
+			return 0;
 		}
 	}
 
@@ -430,7 +442,11 @@ void Creature::onCreatureAppear(Creature* creature, bool isLogin)
 void Creature::onRemoveCreature(Creature* creature, bool)
 {
 	onCreatureDisappear(creature, true);
-	if (creature != this && isMapLoaded) {
+	if (creature == this) {
+		if (master && !master->isRemoved()) {
+			setMaster(nullptr);
+		}
+	} else if (isMapLoaded) {
 		if (creature->getPosition().z == getPosition().z) {
 			updateTileCache(creature->getTile(), creature->getPosition());
 		}
@@ -478,6 +494,9 @@ void Creature::onCreatureMove(Creature* creature, const Tile* newTile, const Pos
 			} else if (Position::getDistanceX(newPos, oldPos) >= 1 && Position::getDistanceY(newPos, oldPos) >= 1) {
 				//diagonal extra cost
 				lastStepCost = 3;
+				if (getPlayer()) {
+					lastStepCost -= 1;
+				}
 			}
 		} else {
 			stopEventWalk();
@@ -1127,14 +1146,12 @@ void Creature::onGainExperience(uint64_t gainExp, Creature* target)
 		return;
 	}
 
-	TextMessage message(MESSAGE_EXPERIENCE_OTHERS, ucfirst(getNameDescription()) + " gained " + std::to_string(gainExp) + (gainExp != 1 ? " experience points." : " experience point."));
-	message.position = position;
-	message.primary.color = TEXTCOLOR_WHITE_EXP;
-	message.primary.value = gainExp;
-
+	TextMessage textMessage(MESSAGE_STATUS_DEFAULT, fmt::format("{:s} gained {:d} {:s}.", ucfirst(getNameDescription()), gainExp, gainExp != 1 ? " experience points" : " experience point"));
 	for (Creature* spectator : spectators) {
-		spectator->getPlayer()->sendTextMessage(message);
+		spectator->getPlayer()->sendTextMessage(textMessage);
 	}
+
+	g_game.addAnimatedText(spectators, std::to_string(gainExp), position, TEXTCOLOR_WHITE);
 }
 
 bool Creature::setMaster(Creature* newMaster) {
@@ -1384,19 +1401,8 @@ int64_t Creature::getStepDuration() const
 		return 0;
 	}
 
-	uint32_t calculatedStepSpeed;
 	uint32_t groundSpeed;
-
 	int32_t stepSpeed = getStepSpeed();
-	if (stepSpeed > -Creature::speedB) {
-		calculatedStepSpeed = floor((Creature::speedA * log((stepSpeed / 2) + Creature::speedB) + Creature::speedC) + 0.5);
-		if (calculatedStepSpeed == 0) {
-			calculatedStepSpeed = 1;
-		}
-	} else {
-		calculatedStepSpeed = 1;
-	}
-
 	Item* ground = tile->getGround();
 	if (ground) {
 		groundSpeed = Item::items[ground->getID()].speed;
@@ -1407,12 +1413,12 @@ int64_t Creature::getStepDuration() const
 		groundSpeed = 150;
 	}
 
-	double duration = std::floor(1000 * groundSpeed / calculatedStepSpeed);
+	double duration = std::floor(1000 * groundSpeed) / stepSpeed;
 	int64_t stepDuration = std::ceil(duration / 50) * 50;
 
 	const Monster* monster = getMonster();
 	if (monster && monster->isTargetNearby() && !monster->isFleeing() && !monster->getMaster()) {
-		stepDuration *= 2;
+		stepDuration *= 3;
 	}
 
 	return stepDuration;
