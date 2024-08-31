@@ -3,46 +3,52 @@ version: "3.3"
 services:
   ubuntu:
     build:
-      context: ./backend
-    container_name: 1-Ubuntu
+      context: ./otserver
+    container_name: OTServer
     stdin_open: true
     tty: true
     ports:
       - "7171:7171"
       - "7172:7172"
     volumes:
-      - ./backend/datapack:/srv
+      - ./otserver/datapack:/srv
     depends_on:
       - db
 
   web:
     build:
-      context: ./frontend
-    container_name: 2-Site
-    volumes:
-      - ./frontend/html:/var/www/html
-      - ./backend/datapack/source:/home/otserver
+      context: ./otsite
+    container_name: OTSite
     ports:
-      - "80:80"
+      - "8080:8080" 
+    environment:
+      - NODE_ENV=production
+    command: npm start
+    volumes:
+      - ./otsite/public:/var/www/html
+      - ./otsite:/app
     depends_on:
       - db
-      - ubuntu
+    networks:
+      - app-network
 
   db:
     image: mysql:5.7
-    container_name: 3-BancoDeDados
+    container_name: OTDataBase
     environment:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: otserv
       MYSQL_PASSWORD: 1234
     volumes:
-      - ./backend/schema:/docker-entrypoint-initdb.d
+      - ./otserver/schema:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
+    networks:
+      - app-network
 
   dbAdminPainel:
     image: phpmyadmin/phpmyadmin:5.1.1
-    container_name: 3-AdminBancoDeDados
+    container_name: OTDbAdmin
     restart: always
     ports:
       - 1010:80
@@ -50,3 +56,9 @@ services:
       - db
     environment:
       PMA_ARBITRARY: 1
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
