@@ -20,18 +20,17 @@ services:
       context: ./otsite
     container_name: OTSite
     ports:
-      - "8080:8080" 
+      - "8080:3000"
     environment:
       - NODE_ENV=production
     command: npm start
     volumes:
-      - ./otsite/public:/var/www/html
       - ./otsite:/app
     depends_on:
       - db
     networks:
       - app-network
-      
+
   db:
     image: mysql:5.7
     container_name: OTDataBase
