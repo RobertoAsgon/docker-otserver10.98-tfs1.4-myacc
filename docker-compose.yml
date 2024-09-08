@@ -31,7 +31,7 @@ services:
       - db
     networks:
       - app-network
-
+      
   db:
     image: mysql:5.7
     container_name: OTDataBase
